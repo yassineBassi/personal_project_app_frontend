@@ -13,9 +13,7 @@ phases:
     commands:
       - npm run build
 
-  post_build:
-    commands:
-      - zip -j build.zip dist/frontend/browser/*
 artifacts: 
   files: 
-    - build.zip
+    - "**/*"
+  base-directory: dist/frontend/browser
