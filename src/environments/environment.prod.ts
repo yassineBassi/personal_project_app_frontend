@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiBase: 'https://BACKEND_DOMAIN/api',
-  analyticsBase: 'https://BACKEND_DOMAIN/analytics',
+  apiBase: 'http://BACKEND_DOMAIN/api',
+  analyticsBase: 'http://BACKEND_DOMAIN/analytics',
 };
