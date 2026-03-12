@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export interface DashboardSummary {
   totalClicks: number;
@@ -58,7 +59,7 @@ export interface UrlAnalytics {
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
-  private readonly base = '/analytics';
+  private readonly base = environment.analyticsBase;
 
   constructor(private http: HttpClient) {}
 
