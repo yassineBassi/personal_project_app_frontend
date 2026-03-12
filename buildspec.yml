@@ -18,7 +18,7 @@ phases:
       - sed -i "s|BACKEND_DOMAIN|$BACKEND_DNS|g" src/environments/environment.prod.ts
   build:
     commands:
-      - npm run build --configuration production
+      - npm run build
 
 artifacts: 
   files: 
