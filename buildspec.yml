@@ -1,0 +1,21 @@
+---
+version: 0.2
+env: 
+  variables: 
+    SERVICE_NAME:
+    REPO_NAME:
+
+phases: 
+  install:
+    commands: 
+      - echo "insalling tools"
+      - npm --v
+      - echo "$SERVICE_NAME"
+      - echo "$REPO_NAME"
+
+  build:
+    commands:
+      - npm run build
+
+artifacts: 
+  directory: ./dist/frontend/browser
