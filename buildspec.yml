@@ -2,7 +2,7 @@
 version: 0.2
 env: 
   variables:
-    BACKEND_DNS:
+    BACKEND_URL:
 phases: 
   install:
     runtime-versions:
@@ -15,7 +15,7 @@ phases:
     commands: 
       - echo "installing dependencies"
       - npm install
-      - sed -i "s|BACKEND_DOMAIN|$BACKEND_DNS|g" src/environments/environment.prod.ts
+      - sed -i "s|BACKEND_URL|$BACKEND_URL|g" src/environments/environment.prod.ts
   build:
     commands:
       - npm run build
