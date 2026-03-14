@@ -117,6 +117,22 @@ Chart.register(...registerables);
           </div>
         </div>
 
+        <!-- Device Types + OS Breakdown -->
+        <div class="charts-row" @fadeIn>
+          <div class="chart-card">
+            <div class="chart-title">Device Types</div>
+            <div class="chart-wrapper">
+              <canvas #deviceChart></canvas>
+            </div>
+          </div>
+          <div class="chart-card wide">
+            <div class="chart-title">Operating Systems</div>
+            <div class="chart-wrapper">
+              <canvas #osChart></canvas>
+            </div>
+          </div>
+        </div>
+
         <!-- Peak Hours + Top URLs -->
         <div class="bottom-row" @fadeIn>
           <div class="chart-card">
@@ -529,6 +545,8 @@ Chart.register(...registerables);
 export class DashboardComponent implements OnInit, AfterViewInit {
   @ViewChild('trendChart') trendChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('browserChart') browserChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('deviceChart') deviceChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('osChart') osChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('hoursChart') hoursChartRef!: ElementRef<HTMLCanvasElement>;
 
   loading = signal(false);
@@ -567,6 +585,8 @@ export class DashboardComponent implements OnInit, AfterViewInit {
     this.destroyCharts();
     this.renderTrendChart(data);
     this.renderBrowserChart(data);
+    this.renderDeviceChart(data);
+    this.renderOsChart(data);
     this.renderHoursChart(data);
   }
 
@@ -640,6 +660,73 @@ export class DashboardComponent implements OnInit, AfterViewInit {
           }
         },
         cutout: '65%'
+      }
+    }));
+  }
+
+  private renderDeviceChart(data: Dashboard) {
+    if (!this.deviceChartRef?.nativeElement) return;
+    const ctx = this.deviceChartRef.nativeElement.getContext('2d')!;
+    const colors = ['#34d399', '#60a5fa', '#f472b6', '#fb923c', '#facc15', '#a78bfa'];
+
+    this.charts.push(new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: data.deviceTypes.map(d => d.deviceType),
+        datasets: [{
+          data: data.deviceTypes.map(d => d.count),
+          backgroundColor: colors.map(c => c + '99'),
+          borderColor: colors,
+          borderWidth: 1.5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: 'rgba(255,255,255,0.5)', font: { size: 10 }, padding: 10 }
+          }
+        },
+        cutout: '65%'
+      }
+    }));
+  }
+
+  private renderOsChart(data: Dashboard) {
+    if (!this.osChartRef?.nativeElement) return;
+    const ctx = this.osChartRef.nativeElement.getContext('2d')!;
+    const colors = ['#fb923c', '#a78bfa', '#34d399', '#60a5fa', '#f472b6', '#facc15'];
+
+    this.charts.push(new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.operatingSystems.map(o => o.os),
+        datasets: [{
+          label: 'Clicks',
+          data: data.operatingSystems.map(o => o.count),
+          backgroundColor: colors.map(c => c + '99'),
+          borderColor: colors,
+          borderWidth: 1.5,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 10 } }
+          },
+          y: {
+            grid: { color: 'rgba(255,255,255,0.04)' },
+            ticks: { color: 'rgba(255,255,255,0.3)', font: { size: 10 } },
+            beginAtZero: true
+          }
+        }
       }
     }));
   }

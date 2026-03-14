@@ -32,6 +32,16 @@ export interface BrowserStat {
   count: number;
 }
 
+export interface DeviceTypeStat {
+  deviceType: string;
+  count: number;
+}
+
+export interface OsStat {
+  os: string;
+  count: number;
+}
+
 export interface PeakHour {
   hour: number;
   count: number;
@@ -43,6 +53,8 @@ export interface Dashboard {
   topUrls: TopUrl[];
   trend: TrendDay[];
   browsers: BrowserStat[];
+  deviceTypes: DeviceTypeStat[];
+  operatingSystems: OsStat[];
   peakHours: PeakHour[];
 }
 
