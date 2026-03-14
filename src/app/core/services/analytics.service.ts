@@ -65,6 +65,8 @@ export interface UrlAnalytics {
     id: string;
     clientIp: string;
     clientBrowser: string;
+    clientDeviceType: string;
+    clientOS: string;
     time: string;
   }[];
 }

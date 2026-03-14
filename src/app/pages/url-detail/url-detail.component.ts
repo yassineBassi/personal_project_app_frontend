@@ -15,7 +15,7 @@ Chart.register(...registerables);
     trigger('fadeIn', [
       transition(':enter', [
         style({ opacity: 0, transform: 'translateY(16px)' }),
-        animate('400ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+        animate('420ms cubic-bezier(0.22, 1, 0.36, 1)', style({ opacity: 1, transform: 'translateY(0)' }))
       ])
     ])
   ],
@@ -27,7 +27,10 @@ Chart.register(...registerables);
 
       <div class="back-nav" @fadeIn>
         <a routerLink="/dashboard" class="back-link">
-          ← Back to Dashboard
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Back to Dashboard
         </a>
       </div>
 
@@ -40,7 +43,11 @@ Chart.register(...registerables);
 
       @if (error()) {
         <div class="error-state" @fadeIn>
-          <div class="error-icon">⚠️</div>
+          <div class="error-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
           <p>{{ error() }}</p>
           <button class="retry-btn" (click)="loadAnalytics()">Retry</button>
         </div>
@@ -48,35 +55,58 @@ Chart.register(...registerables);
 
       @if (analytics(); as data) {
         <div class="detail-header" @fadeIn>
-          <div class="code-badge">
-            <span class="code-label">Short Code</span>
+          <div class="header-left">
+            <div class="code-eyebrow">Short Code</div>
             <code class="code-value">{{ data.code }}</code>
           </div>
-          <div class="click-count">
-            <span class="count-number">{{ data.clickCount | number }}</span>
-            <span class="count-label">Total Clicks</span>
+          <div class="header-right">
+            <div class="click-number">{{ data.clickCount | number }}</div>
+            <div class="click-label">Total Clicks</div>
           </div>
         </div>
 
         <div class="charts-row" @fadeIn>
           <div class="chart-card">
-            <div class="chart-title">Clicks Over Time</div>
+            <div class="chart-header">
+              <span class="chart-title">Clicks Over Time</span>
+            </div>
             <div class="chart-wrapper">
               <canvas #timelineChart></canvas>
             </div>
           </div>
           <div class="chart-card">
-            <div class="chart-title">Browser Distribution</div>
+            <div class="chart-header">
+              <span class="chart-title">Browser Distribution</span>
+            </div>
             <div class="chart-wrapper">
               <canvas #browserChart></canvas>
             </div>
           </div>
         </div>
 
+        <div class="charts-row charts-row-equal" @fadeIn>
+          <div class="chart-card">
+            <div class="chart-header">
+              <span class="chart-title">Device Types</span>
+            </div>
+            <div class="chart-wrapper">
+              <canvas #deviceChart></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header">
+              <span class="chart-title">Operating System</span>
+            </div>
+            <div class="chart-wrapper">
+              <canvas #osChart></canvas>
+            </div>
+          </div>
+        </div>
+
         <div class="clicks-table-card" @fadeIn>
           <div class="table-header">
-            <div class="chart-title">Recent Clicks</div>
-            <div class="table-count">{{ data.clicks.length }} records</div>
+            <span class="chart-title">Recent Clicks</span>
+            <div class="table-count-badge">{{ data.clicks.length }} records</div>
           </div>
 
           @if (data.clicks.length > 0) {
@@ -87,6 +117,8 @@ Chart.register(...registerables);
                     <th>#</th>
                     <th>Time</th>
                     <th>IP Address</th>
+                    <th>Device</th>
+                    <th>OS</th>
                     <th>Browser</th>
                   </tr>
                 </thead>
@@ -96,7 +128,11 @@ Chart.register(...registerables);
                       <td class="row-num">{{ i + 1 }}</td>
                       <td class="time-cell">{{ click.time | date:'MMM d, y HH:mm:ss' }}</td>
                       <td class="ip-cell">{{ click.clientIp || 'Unknown' }}</td>
-                      <td class="browser-cell">{{ click.clientBrowser | slice:0:60 }}{{ (click.clientBrowser.length || 0) > 60 ? '...' : '' }}</td>
+                      <td class="device-cell">
+                        <span class="device-badge">{{ click.clientDeviceType || 'Unknown' }}</span>
+                      </td>
+                      <td class="os-cell">{{ click.clientOS || 'Unknown' }}</td>
+                      <td class="browser-cell">{{ click.clientBrowser | slice:0:55 }}{{ click.clientBrowser.length > 55 ? '…' : '' }}</td>
                     </tr>
                   }
                 </tbody>
@@ -112,8 +148,8 @@ Chart.register(...registerables);
   styles: [`
     .detail-page {
       min-height: 100vh;
-      padding: 5.5rem 1.5rem 3rem;
-      max-width: 1100px;
+      padding: 5.5rem 1.75rem 3.5rem;
+      max-width: 1140px;
       margin: 0 auto;
       position: relative;
     }
@@ -129,18 +165,16 @@ Chart.register(...registerables);
       position: absolute;
       border-radius: 50%;
       filter: blur(120px);
-      opacity: 0.07;
     }
 
     .orb-1 {
-      width: 700px;
-      height: 700px;
-      background: radial-gradient(circle, #7c3aed, transparent);
-      top: -300px;
-      left: 50%;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.09), transparent 70%);
+      top: -300px; left: 50%;
       transform: translateX(-50%);
     }
 
+    /* ── Back nav ── */
     .back-nav {
       margin-bottom: 2rem;
       position: relative;
@@ -148,16 +182,22 @@ Chart.register(...registerables);
     }
 
     .back-link {
-      color: rgba(255,255,255,0.4);
-      text-decoration: none;
-      font-size: 0.9rem;
-      transition: color 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: rgba(255,255,255,0.38);
+      font-size: 0.86rem;
+      font-weight: 500;
+      transition: color 0.2s ease;
     }
 
-    .back-link:hover {
-      color: rgba(255,255,255,0.8);
+    .back-link svg {
+      width: 16px; height: 16px;
     }
 
+    .back-link:hover { color: rgba(255,255,255,0.75); }
+
+    /* ── Loading / Error ── */
     .loading-state, .error-state {
       display: flex;
       flex-direction: column;
@@ -165,15 +205,14 @@ Chart.register(...registerables);
       justify-content: center;
       gap: 1rem;
       min-height: 300px;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255,255,255,0.45);
       position: relative;
       z-index: 1;
     }
 
     .loading-spinner-large {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(167, 139, 250, 0.2);
+      width: 40px; height: 40px;
+      border: 3px solid rgba(167, 139, 250, 0.18);
       border-top-color: #a78bfa;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -181,91 +220,121 @@ Chart.register(...registerables);
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .error-icon { font-size: 2rem; }
+    .error-icon-wrap {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: rgba(248, 113, 113, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .error-icon-wrap svg {
+      width: 24px; height: 24px;
+      color: #f87171;
+    }
 
     .retry-btn {
       padding: 0.5rem 1.5rem;
       background: rgba(167, 139, 250, 0.1);
-      border: 1px solid rgba(167, 139, 250, 0.3);
-      border-radius: 8px;
+      border: 1px solid rgba(167, 139, 250, 0.25);
+      border-radius: 9px;
       color: #a78bfa;
       cursor: pointer;
       font-family: inherit;
+      font-size: 0.875rem;
+      transition: all 0.2s;
     }
 
+    .retry-btn:hover { background: rgba(167, 139, 250, 0.18); }
+
+    /* ── Detail Header ── */
     .detail-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 2rem;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 1.5rem 2rem;
+      margin-bottom: 1.25rem;
+      background: rgba(255,255,255,0.028);
+      border: 1px solid rgba(255,255,255,0.065);
+      border-radius: 22px;
+      padding: 2rem 2.5rem;
       position: relative;
       z-index: 1;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
     }
 
-    .code-label {
-      font-size: 0.75rem;
-      color: rgba(255,255,255,0.4);
+    .header-left {}
+
+    .code-eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.35);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      display: block;
+      letter-spacing: 0.08em;
       margin-bottom: 0.4rem;
     }
 
     .code-value {
       font-family: 'SF Mono', Consolas, monospace;
-      font-size: 1.8rem;
+      font-size: 2.2rem;
       color: #a78bfa;
       font-weight: 700;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
     }
 
-    .click-count {
-      text-align: right;
-    }
+    .header-right { text-align: right; }
 
-    .count-number {
-      display: block;
-      font-size: 3rem;
-      font-weight: 800;
+    .click-number {
+      font-size: 3.2rem;
+      font-weight: 900;
       color: #fff;
-      letter-spacing: -0.03em;
+      letter-spacing: -0.04em;
       line-height: 1;
+      margin-bottom: 0.3rem;
     }
 
-    .count-label {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.4);
+    .click-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.38);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.07em;
     }
 
+    /* ── Charts ── */
     .charts-row {
       display: grid;
       grid-template-columns: 2fr 1fr;
       gap: 1rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       position: relative;
       z-index: 1;
     }
 
+    .charts-row-equal {
+      grid-template-columns: 1fr 1fr;
+    }
+
     .chart-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
+      background: rgba(255,255,255,0.028);
+      border: 1px solid rgba(255,255,255,0.065);
+      border-radius: 20px;
       padding: 1.5rem;
     }
 
-    .chart-title {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: rgba(255,255,255,0.5);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 1.25rem;
+    }
+
+    .chart-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.48);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
     }
 
     .chart-wrapper {
@@ -273,10 +342,11 @@ Chart.register(...registerables);
       height: 220px;
     }
 
+    /* ── Table Card ── */
     .clicks-table-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
+      background: rgba(255,255,255,0.028);
+      border: 1px solid rgba(255,255,255,0.065);
+      border-radius: 20px;
       padding: 1.5rem;
       position: relative;
       z-index: 1;
@@ -289,14 +359,17 @@ Chart.register(...registerables);
       margin-bottom: 1.25rem;
     }
 
-    .table-count {
-      font-size: 0.8rem;
+    .table-count-badge {
+      font-size: 0.75rem;
+      font-weight: 500;
       color: rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 0.2rem 0.7rem;
+      border-radius: 100px;
     }
 
-    .table-wrapper {
-      overflow-x: auto;
-    }
+    .table-wrapper { overflow-x: auto; }
 
     .clicks-table {
       width: 100%;
@@ -305,55 +378,96 @@ Chart.register(...registerables);
 
     .clicks-table th {
       text-align: left;
-      padding: 0.6rem 1rem;
-      font-size: 0.75rem;
+      padding: 0.55rem 0.9rem;
+      font-size: 0.72rem;
       font-weight: 600;
-      color: rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.3);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.07em;
       border-bottom: 1px solid rgba(255,255,255,0.05);
+      white-space: nowrap;
     }
 
     .clicks-table td {
-      padding: 0.75rem 1rem;
-      font-size: 0.85rem;
-      color: rgba(255,255,255,0.7);
-      border-bottom: 1px solid rgba(255,255,255,0.03);
+      padding: 0.7rem 0.9rem;
+      font-size: 0.83rem;
+      color: rgba(255,255,255,0.65);
+      border-bottom: 1px solid rgba(255,255,255,0.028);
     }
 
-    .clicks-table tr:last-child td {
-      border-bottom: none;
-    }
+    .clicks-table tbody tr:last-child td { border-bottom: none; }
 
-    .clicks-table tr:hover td {
+    .clicks-table tbody tr:hover td {
       background: rgba(255,255,255,0.02);
     }
 
     .row-num {
-      color: rgba(255,255,255,0.25) !important;
-      font-size: 0.75rem !important;
-      width: 30px;
+      color: rgba(255,255,255,0.2) !important;
+      font-size: 0.72rem !important;
+      width: 28px;
+      font-weight: 600;
     }
 
-    .time-cell { color: rgba(255,255,255,0.6) !important; white-space: nowrap; }
-    .ip-cell { font-family: 'SF Mono', Consolas, monospace; font-size: 0.8rem !important; }
-    .browser-cell { color: rgba(255,255,255,0.4) !important; font-size: 0.78rem !important; }
+    .time-cell {
+      color: rgba(255,255,255,0.55) !important;
+      white-space: nowrap;
+      font-size: 0.8rem !important;
+    }
+
+    .ip-cell {
+      font-family: 'SF Mono', Consolas, monospace;
+      font-size: 0.78rem !important;
+      color: rgba(255,255,255,0.55) !important;
+    }
+
+    .device-cell { white-space: nowrap; }
+
+    .device-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.18rem 0.6rem;
+      border-radius: 100px;
+      background: rgba(96, 165, 250, 0.1);
+      color: #60a5fa;
+      border: 1px solid rgba(96, 165, 250, 0.2);
+      text-transform: capitalize;
+    }
+
+    .os-cell {
+      font-size: 0.8rem !important;
+      color: rgba(255,255,255,0.5) !important;
+    }
+
+    .browser-cell {
+      color: rgba(255,255,255,0.35) !important;
+      font-size: 0.76rem !important;
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     .empty-msg {
       text-align: center;
-      color: rgba(255,255,255,0.3);
+      color: rgba(255,255,255,0.28);
       padding: 3rem;
+      font-size: 0.875rem;
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 720px) {
       .charts-row { grid-template-columns: 1fr; }
-      .detail-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+      .charts-row-equal { grid-template-columns: 1fr; }
+      .detail-header { flex-direction: column; gap: 1.25rem; align-items: flex-start; padding: 1.5rem; }
+      .header-right { text-align: left; }
+      .detail-page { padding-left: 1rem; padding-right: 1rem; }
     }
   `]
 })
 export class UrlDetailComponent implements OnInit, AfterViewInit {
   @ViewChild('timelineChart') timelineChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('browserChart') browserChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('deviceChart') deviceChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('osChart') osChartRef!: ElementRef<HTMLCanvasElement>;
 
   loading = signal(false);
   error = signal('');
@@ -396,13 +510,14 @@ export class UrlDetailComponent implements OnInit, AfterViewInit {
     this.destroyCharts();
     this.renderTimeline(data);
     this.renderBrowserChart(data);
+    this.renderDeviceChart(data);
+    this.renderOsChart(data);
   }
 
   private renderTimeline(data: UrlAnalytics) {
     if (!this.timelineChartRef?.nativeElement) return;
     const ctx = this.timelineChartRef.nativeElement.getContext('2d')!;
 
-    // Group clicks by day
     const byDay: Record<string, number> = {};
     data.clicks.forEach(click => {
       const day = new Date(click.time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -420,7 +535,7 @@ export class UrlDetailComponent implements OnInit, AfterViewInit {
           label: 'Clicks',
           data: values,
           borderColor: '#a78bfa',
-          backgroundColor: 'rgba(167, 139, 250, 0.1)',
+          backgroundColor: 'rgba(167, 139, 250, 0.08)',
           borderWidth: 2,
           fill: true,
           tension: 0.4,
@@ -465,6 +580,80 @@ export class UrlDetailComponent implements OnInit, AfterViewInit {
         labels: Object.keys(browsers),
         datasets: [{
           data: Object.values(browsers),
+          backgroundColor: colors.map(c => c + '99'),
+          borderColor: colors,
+          borderWidth: 1.5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: 'rgba(255,255,255,0.4)', font: { size: 9 }, padding: 8 }
+          }
+        },
+        cutout: '65%'
+      }
+    }));
+  }
+
+  private renderDeviceChart(data: UrlAnalytics) {
+    if (!this.deviceChartRef?.nativeElement) return;
+    const ctx = this.deviceChartRef.nativeElement.getContext('2d')!;
+
+    const devices: Record<string, number> = {};
+    data.clicks.forEach(click => {
+      const d = click.clientDeviceType || 'Unknown';
+      devices[d] = (devices[d] || 0) + 1;
+    });
+
+    const colors = ['#60a5fa', '#a78bfa', '#34d399', '#f472b6', '#fb923c'];
+
+    this.charts.push(new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(devices),
+        datasets: [{
+          data: Object.values(devices),
+          backgroundColor: colors.map(c => c + '99'),
+          borderColor: colors,
+          borderWidth: 1.5
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: 'rgba(255,255,255,0.4)', font: { size: 9 }, padding: 8 }
+          }
+        },
+        cutout: '65%'
+      }
+    }));
+  }
+
+  private renderOsChart(data: UrlAnalytics) {
+    if (!this.osChartRef?.nativeElement) return;
+    const ctx = this.osChartRef.nativeElement.getContext('2d')!;
+
+    const osCounts: Record<string, number> = {};
+    data.clicks.forEach(click => {
+      const os = click.clientOS || 'Unknown';
+      osCounts[os] = (osCounts[os] || 0) + 1;
+    });
+
+    const colors = ['#34d399', '#60a5fa', '#a78bfa', '#f472b6', '#fb923c'];
+
+    this.charts.push(new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(osCounts),
+        datasets: [{
+          data: Object.values(osCounts),
           backgroundColor: colors.map(c => c + '99'),
           borderColor: colors,
           borderWidth: 1.5
